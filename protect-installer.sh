@@ -6,7 +6,7 @@
 set -Eeuo pipefail
 export DEBIAN_FRONTEND=noninteractive
 
-VERSION="2.0.0"
+VERSION="2.1.0"
 
 # ╔═══════════════════════════════════════════════════════════════════════════╗
 # ║  IDENTITAS ANDA — ISI DUA BARIS INI                                       ║
@@ -31,7 +31,7 @@ OLD_BRANDS=(
 )
 
 # ------------------------------- KONFIGURASI ---------------------------------
-PROTEK_URL="${PROTECT_URL:-https://github.com/mwildanhidayat/installer-pterodactyl/raw/refs/heads/main/proteksi/Protect-panel.zip}"
+PROTEK_URL="${PROTECT_URL:-https://raw.githubusercontent.com/Hndraa03/protect-panel/main/Protect-panel.zip}"
 EXPECTED_SHA="${PROTECT_SHA256:-}"
 PANEL_DIR="${PANEL_DIR:-/var/www/pterodactyl}"
 STATE_DIR="/var/lib/pterodactyl-protect"
@@ -540,6 +540,12 @@ do_install() {
     if [[ ! -f "$PANEL_DIR/storage/framework/down" ]]; then
         if pt_artisan down --retry=60 >/dev/null 2>&1; then MAINT_ON=1; info "🚧 Panel masuk maintenance mode sementara"; fi
     fi
+
+    # Backup route files before Owner Key patcher modifies them.
+    # This makes automatic rollback restore route definitions too.
+    for rel in routes/admin.php routes/api-application.php; do
+        if [[ -f "$PANEL_DIR/$rel" ]]; then backup_file "$rel"; fi
+    done
 
     install_files
 
